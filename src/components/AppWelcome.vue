@@ -21,15 +21,16 @@
       </p>
 
       <button @click="next()" class="btn btn-block btn-primary btn-lg"><i class="fa fa-arrow-right"></i> Next (add wallet)</button>
-      <div class="text-center text-muted">
+      <!-- <div class="text-center text-muted">
         <small>- or -</small>
       </div>
-      <button @click="composeBlank()" class="btn btn-block btn-outline-primary btn-s,"><i class="fa fa-arrow-right"></i> Compose transaction</button>
+      <button @click="composeBlank()" class="btn btn-block btn-outline-primary btn-s,"><i class="fa fa-arrow-right"></i> Compose transaction</button> -->
 
       <br />
 
       <div class="text-center text-muted">
-        <small>Go offline to create an air-gapped transaction.</small>
+        <!-- <small>Go offline to create an air-gapped transaction.</small> -->
+        <small>Offline Air-gapped transactions: work in progress :)</small>
       </div>
     </div><!-- not offline -->
 

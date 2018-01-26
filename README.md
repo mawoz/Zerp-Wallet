@@ -1,5 +1,7 @@
 # Kyte XRP Wallet
 
+### Currently in beta @ **[https://kyteapp.co](https://kyteapp.co)**
+
 Awesome XRP Wallet; VueJS, NodeJS / Webpack / SCSS / ripple-lib, etc.
 
 Work in progress ;)
@@ -24,6 +26,8 @@ Your secret key will be saved on your local device, but **it will be encrypted u
 You can always check your transactions and balance, however: if you want to submit a transaction you'll have to enter your passphrase.
 
 Want to know how we encrypt your secret? Check the `encrypt` method at `/src/components/AddWallet.vue`. We use `CryptoJS.AES` for this.
+
+We configured Webpack to **not** compress / minify / uglify the generated Javascript-code, so you can check out the source even in production-mode.
 
 ## Most recent build
 
