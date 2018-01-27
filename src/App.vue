@@ -1,10 +1,10 @@
 <template>
   <div class="container-fluid" id="app">
     <img src="./assets/logo.png" class="img-fluid" id="logo" />
-    <Main v-if="(wallets !== null && isConnected) || (wallets !== null && offline)" :wallets="wallets" :ripple="ripple" />
+    <Main v-if="wallets !== null || offline" :wallets="wallets" :ripple="ripple" />
 
     <div class="clearfix"></div>
-    <div v-if="!isConnected && !offline" class="text-center alert text-muted">
+    <div v-if="wallets === null && !offline" class="text-center alert text-muted">
       <br /><br /><br />
       <h2>XRP Wallet</h2>
       Connecting...
@@ -61,24 +61,44 @@ window.eventBus = new Vue({
       console.log('LAST LEDGER: ', l)
 
       var expiredTx = this.txQueue.filter(function (lQ) {
-        return lQ.txJson.LastLedgerSequence && lQ.txJson.LastLedgerSequence < l
+        return !lQ.txJson || (lQ.txJson.LastLedgerSequence && lQ.txJson.LastLedgerSequence < l)
       })
 
       var txOk = function (t, exp) {
         $app.txQueue.splice(exp, 1)
         window.getBalances()
-        if (swal.getState().isOpen) swal.close()
-        if (t.outcome.result === 'tesSUCCESS') {
-          swal('Transaction processed', 'Transaction to ' + exp.txJson.Destination + ' is processed!', 'success')
-        } else {
-          swal('Transaction (warning)', 'Transaction to ' + exp.txJson.Destination + ': ' + t.outcome.result, 'warning')
+
+        if (!window.lastTxSwal || window.lastTxSwal !== t.id) { // Prevent closing & opening for the same TX
+          if (swal.getState().isOpen) swal.close()
+
+          if (t.outcome.result === 'tesSUCCESS') {
+            var msg = 'A ledger with your transaction just closed.'
+
+            console.log(t)
+
+            if (t.specification && t.specification.destination) {
+              msg = 'Transaction to ' + t.specification.destination.address + ' is processed!'
+            }
+            if (exp.txJson) {
+              msg = 'Transaction to ' + exp.txJson.Destination + ' is processed!'
+            }
+            swal('Transaction processed', msg, 'success')
+
+            if (t.id) window.lastTxSwal = t.id
+          } else {
+            swal('Transaction (warning)', 'Transaction to ' + exp.txJson.Destination + ': ' + t.outcome.result, 'warning')
+          }
         }
       }
 
       var txErr = function (e, exp) {
         if (swal.getState().isOpen) swal.close()
         $app.txQueue.splice(exp, 1)
-        swal('Transaction (error)', 'Transaction to ' + exp.txJson.Destination + ': ' + e.message, 'error')
+        var msg = 'Failure: ' + e.message
+        if (exp.txJson) {
+          msg = 'Transaction to ' + exp.txJson.Destination + ': ' + e.message
+        }
+        swal('Transaction (error)', msg, 'error')
       }
 
       if (expiredTx.length > 0) {
@@ -87,12 +107,16 @@ window.eventBus = new Vue({
           $app.ripple.getTransaction(exp.txSigned.id).then(function (t) {
             txOk(t, exp)
           }).catch(function (e) {
-            if (e.name === 'MissingLedgerHistoryError' || e.message === 'noNetwork') {
+            if (e.name === 'MissingLedgerHistoryError' || e.message === 'noNetwork' || e.name === 'NotFoundError') {
               $app.rippleFullHistory.getTransaction(exp.txSigned.id).then(function (t) {
                 txOk(t, exp)
               }).catch(function (e) {
                 console.log('getTransaction @ ripple s2: ', e)
-                txErr(e, exp)
+                if (e.name === 'MissingLedgerHistoryError' || e.message === 'noNetwork' || e.name === 'NotFoundError') {
+                  // Retry some more
+                } else {
+                  txErr(e, exp)
+                }
               })
             } else {
               console.log('getTransaction @ prim. server: ', e)
@@ -108,13 +132,18 @@ window.eventBus = new Vue({
       var $app = this
 
       console.log(tx)
-      $app.txQueue.push(tx)
 
       $app.ripple.submit(tx.txSigned.signedTransaction).then(function (txResponseData) {
         console.log(txResponseData)
-        console.log('   >> [Tentative] Result: ', txResponseData.resultCode)
-        console.log('   >> [Tentative] Message: ', txResponseData.resultMessage)
-        callbackOk(txResponseData)
+        if (txResponseData.resultCode === 'tefPAST_SEQ') {
+          swal('Transaction (error)', txResponseData.resultMessage, 'error')
+        } else {
+          if (tx.txSigned.id) $app.txQueue.push(tx)
+
+          console.log('   >> [Tentative] Result: ', txResponseData.resultCode)
+          console.log('   >> [Tentative] Message: ', txResponseData.resultMessage)
+          callbackOk(txResponseData)
+        }
       }).catch(function (e) {
         if (e.message === 'noNetwork') {
           // Retry @ s2
@@ -166,7 +195,7 @@ window.eventBus = new Vue({
         })
       }).then(() => {
       }).catch(function (e) {
-        console.error(e)
+        console.log(e)
         $app.offline = true
         $app.$emit('nofallbacknetwork', e)
       })
@@ -192,15 +221,17 @@ window.eventBus = new Vue({
     },
     startFeePoller: function ($app) {
       setInterval(function () {
-        $app.ripple.getFee().then(function (e) {
-          var _fee = parseFloat(e).toFixed(6)
-          if (_fee !== $app.fee) {
-            $app.fee = _fee
-            console.log('-- New estimated fee: ', $app.fee)
-            if ($app.fee > $app.maxFee) $app.fee = $app.maxFee
-            $app.$emit('fee', $app.fee)
-          }
-        })
+        if (!$app.offline) {
+          $app.ripple.getFee().then(function (e) {
+            var _fee = parseFloat(e).toFixed(6)
+            if (_fee !== $app.fee) {
+              $app.fee = _fee
+              console.log('-- New estimated fee: ', $app.fee)
+              if ($app.fee > $app.maxFee) $app.fee = $app.maxFee
+              $app.$emit('fee', $app.fee)
+            }
+          })
+        }
       }, 5000)
     },
     ledgerClosed: function (ledger) {
@@ -266,32 +297,56 @@ export default {
     // Make getBalacnes public;
     window.getBalances = this.getBalances
 
+    var appStartedOnline = true
+    var initWhenOnline = function () {
+      $app.ripple = new ripple.RippleAPI({ server: 'wss://' + $app.rippledServer })
+      $app.connect()
+
+      window.eventBus.$on('nofallbacknetwork', function (error) {
+        if (!$app.connected) {
+          // Offline mode, both rippled-servers: no connection
+          console.log('Switching app to offline.')
+          $app.offline = true
+          $app.retrieveWallets()
+        }
+        return error
+      })
+
+      window.eventBus.$on('tx', function (message) {
+        // console.log('ontx')
+        console.log(message.transaction.Account + ' <> ' + message.transaction.Destination + ' @ ' + message.ledger_index, message.transaction)
+        $app.getBalances()
+      })
+    }
+
+    window.eventBus.offline = !navigator.onLine
+
+    if (window.eventBus.offline) {
+      $app.retrieveWallets()
+      appStartedOnline = false
+    } else {
+      initWhenOnline()
+    }
+
     window.addEventListener('online', function () {
       $app.offline = false
       window.eventBus.offline = false
+
+      if (!appStartedOnline) {
+        // Started offline, came online, init
+        setTimeout(function () {
+          window.eventBus.onConnected(function () {
+            initWhenOnline()
+            $app.getBalances()
+          })
+          window.eventBus.connectFullHistoryNode()
+        }, 1500)
+      }
     })
+
     window.addEventListener('offline', function () {
       $app.offline = true
       window.eventBus.offline = true
-    })
-
-    this.ripple = new ripple.RippleAPI({ server: 'wss://' + this.rippledServer })
-    this.connect()
-
-    window.eventBus.$on('nofallbacknetwork', function (error) {
-      if (!$app.connected) {
-        // Offline mode, both rippled-servers: no connection
-        console.log('Switching app to offline.')
-        $app.offline = true
-        $app.retrieveWallets()
-      }
-      return error
-    })
-
-    window.eventBus.$on('tx', function (message) {
-      // console.log('ontx')
-      console.log(message.transaction.Account + ' <> ' + message.transaction.Destination + ' @ ' + message.ledger_index, message.transaction)
-      $app.getBalances()
     })
   },
   methods: {
@@ -300,7 +355,7 @@ export default {
       this.persistWallets()
     },
     getBalances: function () {
-      if (this.offline) {
+      if (this.offline || window.eventBus.offline) {
         console.log('Skip getBalances, offline')
         return
       }
@@ -317,7 +372,7 @@ export default {
               var firstLedger = parseInt(ledgers[0])
               var lastLedger = parseInt(ledgers.reverse()[0])
               window.eventBus.rippleFullHistory.getAccountInfo(w.address).then(function (accInfo) {
-                // console.log(accInfo)
+                Vue.set(w, '__sequence', parseInt(accInfo.sequence))
 
                 try {
                   window.eventBus.rippleFullHistory.getTransactions(w.address, {
@@ -348,8 +403,8 @@ export default {
 
           try {
             $app.ripple.getAccountInfo(w.address).then(function (accInfo) {
-              // console.log(accInfo)
               Vue.set(w, 'balance', parseFloat(accInfo.xrpBalance))
+              Vue.set(w, '__sequence', parseInt(accInfo.sequence))
             }).catch(function (e) {
               if (e.message === 'actNotFound') {
                 Vue.set(w, 'balance', 0)
@@ -381,6 +436,7 @@ export default {
             Vue.set(w, 'balance', null)
             Vue.set(w, '__tx', [])
             Vue.set(w, '__txFetched', false)
+            Vue.set(w, '__sequence', 0)
 
             window.eventBus.subscribeAccount(w.address)
           })
@@ -401,6 +457,7 @@ export default {
         Vue.set(newWallet, 'balance', null)
         Vue.set(newWallet, '__tx', [])
         Vue.set(newWallet, '__txFetched', false)
+        Vue.set(newWallet, '__sequence', 0)
 
         this.wallets.push(newWallet)
 

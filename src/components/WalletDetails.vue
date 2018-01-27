@@ -68,7 +68,8 @@
           <div class="text-center">
             <QrCode :value="wallet.address" :options="{ size: 150 }"></QrCode>
           </div>
-          <button @click="composeTx()" v-if="offline || (wallet.key && wallet.balance > ripple.__serverInfo.validatedLedger.reserveBaseXRP)" style="margin-top: 5px;" class="btn btn-block btn-sm btn-primary"><i class="fa fa-plus-circle"></i> New transction</button>
+          <button @click="composeTx()" v-if="!offline && wallet.key && wallet.balance > reserveXRP" style="margin-top: 5px;" class="btn btn-block btn-sm btn-primary"><i class="fa fa-plus-circle"></i> New transction</button>
+          <button @click="composeTx()" v-if="offline || !wallet.key" style="margin-top: 5px;" class="btn btn-block btn-sm btn-primary"><i class="fa fa-plus-circle"></i> Create air gapped transction</button>
         </div>
       </div>
 
@@ -107,6 +108,10 @@
         <br />
       </div>
 
+      <div class="alert alert-warning text-center" v-if="offline">
+        No transaction history available in offline mode
+      </div>
+
       <h5 v-if="wallet.__tx.length > 0 && !offline"><b>Transactions</b></h5>
 
       <div class="well" v-if="!offline">
@@ -117,7 +122,7 @@
         </div>
 
         <p class="alert alert-warning text-center" v-if="wallet.__txFetched === 'actNotFound' && wallet.__tx.length < 1">
-          Wallet not activated, deposit <b>{{ ripple.__serverInfo.validatedLedger.reserveBaseXRP }}</b> XRP to activate this wallet.
+          Wallet not activated, deposit <b>{{ reserveXRP }}</b> XRP to activate this wallet.
         </p>
         <p class="alert alert-danger text-center" v-if="wallet.__txFetched !== false && wallet.__txFetched !== 'actNotFound' && wallet.__tx.length < 1">
           Error retrieving transactions<br /><b>{{ wallet.__txFetched !== true ? wallet.__txFetched : '' }}</b>
@@ -218,6 +223,10 @@ export default {
       return window.eventBus.txQueue.filter(function (r) {
         return r.from === $app.wallet.address
       })
+    },
+    reserveXRP: function () {
+      if (!this.ripple || !this.ripple.__serverInfo || !this.ripple.__serverInfo.validatedLedger) return 0
+      return this.ripple.__serverInfo.validatedLedger.reserveBaseXRP
     }
   },
   filters: {

@@ -21,29 +21,28 @@
       </p>
 
       <button @click="next()" class="btn btn-block btn-primary btn-lg"><i class="fa fa-arrow-right"></i> Next (add wallet)</button>
-      <!-- <div class="text-center text-muted">
-        <small>- or -</small>
-      </div>
-      <button @click="composeBlank()" class="btn btn-block btn-outline-primary btn-s,"><i class="fa fa-arrow-right"></i> Compose transaction</button> -->
-
-      <br />
-
-      <div class="text-center text-muted">
-        <!-- <small>Go offline to create an air-gapped transaction.</small> -->
-        <small>Offline Air-gapped transactions: work in progress :)</small>
-      </div>
+      <button v-if="!offline" @click="submitAirGapped()" class="btn btn-block btn-outline-primary btn-md"><i class="fa fa-send"></i> Send air gapped transaction</button>
     </div><!-- not offline -->
 
     <div v-if="offline && !composingTx">
       <p>
-        You are using kyte in offline mode; no rippled-server could be reached.
+        You are using Kyte in offline mode.
       </p>
       <p>
-        When using kyte in offline mode you can only create air-gapped transactions, meaning you
+        When using kyte in offline mode you can only create air gapped transactions, meaning you
         can create and sign a transaction, and use an online computer to submit the transaction.
         This way, your private key will not be entered online <i class="fa fa-smile-o"></i>
       </p>
-      <button @click="composeBlank()" class="btn btn-block btn-primary btn-md"><i class="fa fa-plus-circle"></i> Compose (air-gapped) transaction</button>
+      <h6><b>Create air gapped transactions</b></h6>
+      <p>
+        Your wallet should be added to Kyte in read only
+        mode (using your public key (wallet address)).
+      </p>
+      <p>
+        You should be online for this, since we need to fetch your 'wallet sequence'
+        from the XRP ledger to be able to create
+        a valid transaction for you to sign.
+      </p>
     </div><!-- offline -->
   </div>
 </template>
@@ -62,6 +61,9 @@ export default {
   methods: {
     composeBlank: function () {
       this.$parent.composeBlank()
+    },
+    submitAirGapped: function () {
+      this.$parent.submitAirGapped = true
     }
   },
   computed: {

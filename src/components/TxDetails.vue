@@ -5,21 +5,21 @@
     </div>
 
     <ul class="list-group">
-      <li class="list-group-item" :class="{ 'active' : wallet.tx && tx.specification.source.address !== wallet.address }" @click="composeTx(tx.specification.source.address)">
+      <li class="list-group-item" :class="{ 'active' : tx.specification.source.address !== wallet.address }" @click="composeTx(tx.specification.source.address)">
         <label><small><b>From</b></small></label>
-        <code class="tx" :class="{ 'text-white' : wallet.tx && tx.specification.source.address !== wallet.address }">
+        <code class="tx" :class="{ 'text-white' : tx.specification.source.address !== wallet.address }">
           {{ tx.specification.source.address }}
-          <span class="pull-right" v-if="wallet.tx && tx.specification.source.address !== wallet.address"><i class="fa fa-paper-plane fa-fw"></i></span>
+          <span class="pull-right" v-if="tx.specification.source.address !== wallet.address"><i class="fa fa-paper-plane fa-fw"></i></span>
         </code>
       </li>
-      <li class="list-group-item" :class="{ 'active' : wallet.tx && tx.specification.destination.address !== wallet.address }" @click="composeTx(tx.specification.destination.address, tx.specification.destination.tag)">
-        <label><small><b :class="{ 'text-warning' : wallet.tx && tx.specification.destination.address !== wallet.address }">To</b></small></label>
-        <code class="tx" :class="{ 'text-white' : wallet.tx && tx.specification.destination.address !== wallet.address }">
+      <li class="list-group-item" :class="{ 'active' : tx.specification.destination.address !== wallet.address }" @click="composeTx(tx.specification.destination.address, tx.specification.destination.tag)">
+        <label><small><b :class="{ 'text-warning' : tx.specification.destination.address !== wallet.address }">To</b></small></label>
+        <code class="tx" :class="{ 'text-white' : tx.specification.destination.address !== wallet.address }">
           {{ tx.specification.destination.address }}
-          <span class="pull-right" v-if="wallet.tx && tx.specification.destination.address !== wallet.address"><i class="fa fa-paper-plane fa-fw"></i></span>
+          <span class="pull-right" v-if="tx.specification.destination.address !== wallet.address"><i class="fa fa-paper-plane fa-fw"></i></span>
         </code>
         <small v-if="tx.specification.destination.tag">
-          <code class="tx" :class="{ 'text-white' : wallet.tx && tx.specification.destination.address !== wallet.address }"><i class="fa fa-tag"></i> {{ tx.specification.destination.tag }}</code>
+          <code class="tx" :class="{ 'text-white' : tx.specification.destination.address !== wallet.address }"><i class="fa fa-tag"></i> {{ tx.specification.destination.tag }}</code>
         </small>
       </li>
       <li class="list-group-item">
@@ -57,13 +57,13 @@ export default {
   },
   methods: {
     composeTx: function (address, tag) {
-      if (address !== this.wallet.address && this.wallet.tx) {
-        window.eventBus.composeTx({
-          from: this.wallet.address,
-          to: address,
-          tag: tag || ''
-        })
-      }
+      // if (address !== this.wallet.address && this.wallet.tx) {
+      window.eventBus.composeTx({
+        from: this.wallet.address,
+        to: address,
+        tag: tag || ''
+      })
+      // }
     }
   },
   computed: {
