@@ -28,18 +28,24 @@
             What is VueJS? Virtual DOM, easy example: https://jsfiddle.net/k6j2u2kx/1/
 
         Todo:
-            - Addressbook
-            - Use offline (add wallet+secret offline) to generate air-gapped
-                - Create tx: air-gapped export
-                - Submit air-gapped tx
+            - Cleanup code:
+                - Create module for functions used in multiple components
+                - Better separation (moving some vars + methods around) of stuff
+                  that's currently in modules, but should be in window.eventBus
+                - Moving window.eventBus to a global Vue component (or Vuex)
+                - Moving some stuff in Main to small components
+                  (like the air gapped stuff)
+            - Addressbook (wallet addr. + dest. tag)
+                - Browse to select to-address
+                - Save to-address when sending
+                - List, search & remove
 
         Notes:
-            Output compression (source JS) = off :D
+            Output compression (source JS) = off :D You can even check the vendor source,
+            no uglify / compression / etc.
 
         Additional (external)
             - Static Offline wallet generator
-            - Generate wallet / generate from mnemonic / generate random / generate from custom txt seed (sha512)
-            - Submit air-gapped tx
     -->
 
     <script src="/static/vendor/lodash/lodash.js"></script>
