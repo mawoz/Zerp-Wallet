@@ -69,13 +69,14 @@
             <QrCode :value="wallet.address" :options="{ size: 150 }"></QrCode>
           </div>
           <button @click="composeTx()" v-if="!offline && wallet.key && wallet.balance > reserveXRP" style="margin-top: 5px;" class="btn btn-block btn-sm btn-primary"><i class="fa fa-plus-circle"></i> New transction</button>
-          <button @click="composeTx()" v-if="offline || !wallet.key" style="margin-top: 5px;" class="btn btn-block btn-sm btn-primary"><i class="fa fa-plus-circle"></i> Create air gapped transction</button>
+          <button @click="composeTx()" v-if="offline || !wallet.key" style="margin-top: 5px;" class="btn btn-block btn-sm btn-primary"><i class="fa fa-plus-circle"></i> Create air gapped transaction</button>
         </div>
       </div>
 
       <br />
 
       <div v-if="tentativeTxs.length > 0">
+        <!-- Todo: Tentative txs: don't show if already in TX history -->
         <h5><b>Tentative transaction(s)</b></h5>
 
         <p class="alert alert-warning text-center" style="padding-top: 2px; padding-bottom: 2px;">
@@ -92,10 +93,10 @@
                 <b>{{ t.txJson.Destination }}</b>
                 <span v-if="t.txJson.DestinationTag" class="text-secondary"><i class="fa fa-tag"></i> {{ t.txJson.DestinationTag }}</span>
               </code>
-              <br />
+              <!-- <br />
               <code>{{ t.txJson.LastLedgerSequence }}</code>
               <br />
-              <code>{{ lastLedgerVersion }}</code>
+              <code>{{ lastLedgerVersion }}</code> -->
               <!-- <span class="pull-right">
                 &nbsp;
                 <i class="fa fa-fw fa-paper-plane text-warning" v-if="t.specification.source.address === wallet.address"></i>
