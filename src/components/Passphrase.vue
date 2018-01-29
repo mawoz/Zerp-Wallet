@@ -2,14 +2,24 @@
   <div class="passphrase">
     <span @click="switchViewmode()" class="view-mode" :class="{ 'text-muted': viewMode === 'password', 'text-primary': viewMode !== 'password' }"><i class="fa fa-eye fa-fw"></i></span>
     <span class="passphrase-wordcount" :class="{ 'bg-danger': passphraseWordCount < minWords, 'bg-warning': passphraseWordCount >= minWords && passphraseWordCount < safeWords, 'bg-success' : passphraseWordCount >= safeWords }">{{ passphraseWordCount }}</span>
-    <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" :type="viewMode" class="form-control passphrase" :xclass="{ 'is-invalid': passphraseWordCount < minWords }" v-model="passphrase" :placeholder="placeholderTxt" autofocus :disabled="disabled" />
+    <input autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" :type="viewMode" class="form-control passphrase" v-model="passphrase" :placeholder="placeholderTxt" :autofocus="autofocus" :disabled="disabled" />
   </div>
 </template>
 
 <script>
 export default {
   name: 'Passphrase',
-  props: [ 'value', 'length', 'safelength', 'placeholder', 'disabled' ],
+  props: {
+    value: String,
+    length: Number,
+    safelength: Number,
+    placeholder: String,
+    disabled: Boolean,
+    autofocus: {
+      type: Boolean,
+      default: true
+    }
+  },
   data () {
     return {
       passphrase: this.value,

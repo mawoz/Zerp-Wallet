@@ -96,7 +96,7 @@
 
       <Passphrase v-model="passphrase" />
       <div class="repeat-passphrase" v-if="passphrase.length > 0">
-        <Passphrase v-model="passphrase2" placeholder="Repeat your passphrase (just to be sure)" />
+        <Passphrase v-model="passphrase2" :autofocus="false" placeholder="Repeat your passphrase (just to be sure)" />
       </div>
       <br />
       <button v-if="passphrase.length > 0 && !addingWallet && passphrase !== '' && passphrase === passphrase2" @click="nextAddWallet()" class="btn btn-block btn-primary btn-lg"><i class="fa fa-arrow-right"></i> Finish</button>
