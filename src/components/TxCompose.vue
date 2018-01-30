@@ -152,12 +152,17 @@
     <div v-if="airGappedTx">
       <h5><b>Air Gapped Transaction</b></h5>
       <p>
-        Below is your signed transaction. You can safely
-        copy the transaction, and paste it somewhere
-        (eg. Kyte app, online) to submit
+        Below is your signed transaction. You either scan the QR with an online verion of Kyte,
+        or safely copy the transaction, and paste it somewhere (eg. Kyte app, online) to submit
         the transaction to the XRP ledger.
       </p>
+
+      <div class="text-center">
+        <QrCode :value="airGappedTxStr" :options="{ size: 225 }"></QrCode>
+      </div>
+
       <textarea class="form-control-sm form-control" name="airGappedTx" id="airGappedTx" rows="12" v-html="airGappedTxStr" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+
       <div class="row">
         <div class="col">
           <button @click="airGappedTx=null;close()" class="btn btn-block btn-outline-danger">
@@ -180,6 +185,7 @@ import { QrcodeReader } from 'vue-qrcode-reader'
 import Passphrase from './Passphrase'
 import swal from 'sweetalert'
 import CryptoJS from 'crypto-js'
+import QrCode from '@xkeshi/vue-qrcode'
 import VueClipboard from 'vue-clipboard2'
 import Vue from 'vue'
 
@@ -190,7 +196,8 @@ export default {
   props: [ 'tx', 'wallets', 'ripple', 'close' ],
   components: {
     QrcodeReader,
-    Passphrase
+    Passphrase,
+    QrCode
   },
   data () {
     return {
